@@ -1,81 +1,107 @@
-    async function loadBibleData() {
-    const response = await fetch('data/en_kjv.json');
-    return response.json();
-    }
+async function loadBibleData() {
+  const response = await fetch('data/en_kjv.json');
+  return response.json();
+}
 
-    let savedVerses = [];
-    let currentVerse = null;
+let savedVerses = [];
+let currentVerse = null;
 
-    function getRandomVerse(bibleData) {
-    // bibleData is an array of book objects
-    const bookIndex = Math.floor(Math.random() * bibleData.length);
-    const book = bibleData[bookIndex];
+// --- FIXED VERSION ---
+function getRandomVerse(bibleData) {
+  // Pick a random book
+  const bookIndex = Math.floor(Math.random() * bibleData.length);
+  const book = bibleData[bookIndex];
+  const chapters = book.chapters;
 
-    // Get all chapter numbers (keys are strings)
-    const chapters = Object.keys(book.chapters);
-    const chapterIndex = Math.floor(Math.random() * chapters.length);
-    const chapterNum = chapters[chapterIndex];
+  // --- Handle chapters (array or object) ---
+  let chapterData, chapterNum;
+  if (Array.isArray(chapters)) {
+    // Chapters stored as an array (0-based)
+    const cIdx = Math.floor(Math.random() * chapters.length);
+    chapterData = chapters[cIdx];
+    chapterNum = cIdx + 1; // convert to 1-based
+  } else {
+    // Chapters stored as object with keys "1","2","3",...
+    const cKeys = Object.keys(chapters).map(Number).sort((a, b) => a - b);
+    const cIdx = Math.floor(Math.random() * cKeys.length);
+    chapterNum = cKeys[cIdx]; // already 1-based
+    chapterData = chapters[String(chapterNum)];
+  }
 
-    const verses = Object.keys(book.chapters[chapterNum]);
-    const verseIndex = Math.floor(Math.random() * verses.length);
-    const verseNum = verses[verseIndex];
+  // --- Handle verses (array or object) ---
+  let verseText, verseNum;
+  if (Array.isArray(chapterData)) {
+    const vIdx = Math.floor(Math.random() * chapterData.length);
+    verseText = chapterData[vIdx];
+    verseNum = vIdx + 1; // convert to 1-based
+  } else {
+    const vKeys = Object.keys(chapterData).map(Number).sort((a, b) => a - b);
+    const vIdx = Math.floor(Math.random() * vKeys.length);
+    verseNum = vKeys[vIdx]; // already 1-based
+    verseText = chapterData[String(verseNum)];
+  }
 
-    const text = book.chapters[chapterNum][verseNum];
-    return {
-        bookName: book.name,
-        chapter: chapterNum,
-        verse: verseNum,
-        text: text
-    };
-    }
-    document.getElementById('generateVerse').addEventListener('click', async () => {
-    try
-    {
+  return {
+    bookName: book.name,
+    chapter: chapterNum,
+    verse: verseNum,
+    text: verseText
+  };
+}
+
+// --- Event: Generate Verse ---
+document.getElementById('generateVerse').addEventListener('click', async () => {
+  try {
     const bibleData = await window.electronAPI.loadBibleData();
     const randomVerse = getRandomVerse(bibleData);
+
     currentVerse = {
-        text: randomVerse.text,
-        reference: `${randomVerse.bookName} ${randomVerse.chapter}:${randomVerse.verse}`,
-        bookName: randomVerse.bookName,
-        chapter: randomVerse.chapter,
-        verse: randomVerse.verse
+      text: randomVerse.text,
+      reference: `${randomVerse.bookName} ${randomVerse.chapter}:${randomVerse.verse}`,
+      bookName: randomVerse.bookName,
+      chapter: randomVerse.chapter,
+      verse: randomVerse.verse
     };
+
     document.getElementById('verseDisplay').innerText = 
-        `${randomVerse.bookName} ${randomVerse.chapter}:${randomVerse.verse}\n\n${randomVerse.text}`;
+      `${randomVerse.bookName} ${randomVerse.chapter}:${randomVerse.verse}\n\n${randomVerse.text}`;
     document.getElementById('saveVerse').disabled = false;
-    } catch (err) {
-        document.getElementById('verseDisplay').innerText = 'Error loading verse: ' + err.message;
-        console.error(err);
-    }
-    });
 
-    document.getElementById('saveVerse').addEventListener('click', async () => {
-        const isSaved = savedVerses.some(saved => saved.reference === currentVerse.reference);
+    console.log("DEBUG → Generated Verse:", currentVerse.reference, currentVerse.text.slice(0,60));
+  } catch (err) {
+    document.getElementById('verseDisplay').innerText = 'Error loading verse: ' + err.message;
+    console.error(err);
+  }
+});
 
-        if(isSaved){
-            document.getElementById('saveVerse').disabled = true;
-            return;
-        }
+// --- Event: Save Verse ---
+document.getElementById('saveVerse').addEventListener('click', async () => {
+  const isSaved = savedVerses.some(saved => saved.reference === currentVerse.reference);
 
-const savedVerse = {
+  if (isSaved) {
+    document.getElementById('saveVerse').disabled = true;
+    return;
+  }
+
+  const savedVerse = {
     ...currentVerse,
     dateSaved: new Date().toLocaleDateString(),
     id: Date.now()
   };
-  
+
   savedVerses.push(savedVerse);
   console.log('Verse saved! Total saved:', savedVerses.length);
-  
-  // Update UI
+
   updateSavedCount();
   showNotification('Verse saved successfully! ✨');
   document.getElementById('saveVerse').disabled = true;
 });
 
+// --- Event: View Saved Verses ---
 document.getElementById('savedVerse').addEventListener('click', async () => {
-const mainContent = document.getElementById('mainContent');
-const savedPage = document.getElementById('savedPage');
-  
+  const mainContent = document.getElementById('mainContent');
+  const savedPage = document.getElementById('savedPage');
+
   if (mainContent && savedPage) {
     mainContent.style.display = 'none';
     savedPage.style.display = 'block';
@@ -88,10 +114,11 @@ const savedPage = document.getElementById('savedPage');
   }
 });
 
+// --- Event: Back to Main ---
 document.getElementById('backToMain').addEventListener('click', () => {
   const mainContent = document.getElementById('mainContent');
   const savedPage = document.getElementById('savedPage');
-  
+
   if (mainContent && savedPage) {
     mainContent.style.display = 'block';
     savedPage.style.display = 'none';
@@ -100,6 +127,7 @@ document.getElementById('backToMain').addEventListener('click', () => {
   }
 });
 
+// --- Event: Clear Saved Verses ---
 document.getElementById('clearAll').addEventListener('click', () => {
   if (confirm('Are you sure you want to delete all saved verses? This action cannot be undone.')) {
     savedVerses = [];
@@ -109,8 +137,7 @@ document.getElementById('clearAll').addEventListener('click', () => {
   }
 });
 
-
-//Helper stuff
+// --- Helpers ---
 function updateSavedCount() {
   const countElement = document.getElementById('savedCount');
   if (countElement) {
@@ -132,7 +159,7 @@ function showNotification(message) {
 function renderSavedVerses() {
   const container = document.getElementById('savedVersesList');
   if (!container) return;
-  
+
   if (savedVerses.length === 0) {
     container.innerHTML = '<div class="no-verses">No saved verses yet. Generate and save some scriptures to see them here!</div>';
     return;
@@ -155,36 +182,32 @@ function deleteVerse(verseId) {
   console.log('Verse deleted, remaining:', savedVerses.length);
 }
 
+// --- Clock functionality ---
+function updateClock() {
+  const now = new Date();
 
-        // Clock functionality
-        function updateClock() {
-            const now = new Date();
-            
-            // Update time
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            
-            document.getElementById('hours').textContent = hours;
-            document.getElementById('minutes').textContent = minutes;
-            document.getElementById('seconds').textContent = seconds;
-            
-            // Update date
-            const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-            };
-            const dateString = now.toLocaleDateString('en-US', options);
-            document.getElementById('dateDisplay').textContent = dateString;
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
 
-            if (dateString.options.weekday === "Sunday")
-            {
-                document.getElementById('Sunday').display = 'block';
-            } 
-        }
+  document.getElementById('hours').textContent = hours;
+  document.getElementById('minutes').textContent = minutes;
+  document.getElementById('seconds').textContent = seconds;
 
-        // Initialize clock
-        updateClock();
-        setInterval(updateClock, 1000);
+  const options = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  const dateString = now.toLocaleDateString('en-US', options);
+  document.getElementById('dateDisplay').textContent = dateString;
+
+  if (dateString.options?.weekday === "Sunday") {
+    document.getElementById('Sunday').display = 'block';
+  } 
+}
+
+// Initialize clock
+updateClock();
+setInterval(updateClock, 1000);
