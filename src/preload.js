@@ -1,12 +1,13 @@
-const { contextBridge } = require('electron');
-const fs = require('fs');
-const path = require('path');
+// preload.js - Final Version
+
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  loadBibleData: () => {
-    const dataPath = path.join(__dirname, 'data', 'en_kjv.json');
-    const data = fs.readFileSync(dataPath, 'utf-8');
-    const jsondata = data.replace(/^\uFEFF/, '');
-    return JSON.parse(jsondata);
-  }
+  loadBibleData: () => ipcRenderer.invoke('load-bible-data'),
+});
+
+// The preload script now just sends messages to the main process
+contextBridge.exposeInMainWorld('electronStore', {
+  get: (key) => ipcRenderer.invoke('electron-store-get', key),
+  set: (key, val) => ipcRenderer.invoke('electron-store-set', key, val),
 });

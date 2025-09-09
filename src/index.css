@@ -326,3 +326,160 @@ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       .notification.show {
         transform: translateX(0);
       }
+
+      /* --- Journal Button on Saved Verse Card --- */
+.journal-btn {
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.journal-btn:hover {
+  background-color: #cbd5e0;
+  transform: translateY(-1px);
+}
+
+
+/* --- Journal Modal General Styles --- */
+
+/* The dark background overlay */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 100;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease;
+}
+
+/* The white content box of the modal */
+.modal-content {
+  background-color: #fefefe;
+  margin: 10% auto;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 550px;
+  position: relative;
+  animation: slideIn 0.4s ease;
+}
+
+/* --- Modal Sections (Header, Body, Footer) --- */
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #4a5568;
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  color: #a0aec0;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+  color: #718096;
+}
+
+/* --- Modal Form and Verse Elements --- */
+
+.journal-verse-reference {
+  font-size: 1rem;
+  color: #667eea;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.journal-verse-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4a5568;
+  font-style: italic;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f7fafc;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+}
+
+#journalTextarea {
+  width: 100%;
+  height: 150px;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #4a5568;
+  resize: vertical;
+  box-sizing: border-box; /* Important for padding and border */
+}
+
+#journalTextarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.modal-footer {
+  text-align: right;
+  margin-top: 20px;
+}
+
+/* Reuse your .btn and .btn-save styles for the Save button */
+#saveJournalBtn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#saveJournalBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+}
+
+
+/* --- Modal Animations --- */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

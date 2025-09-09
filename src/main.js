@@ -1,56 +1,61 @@
-const { app, BrowserWindow } = require('electron');
+// main.js - Final Corrected Version
+
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
+const fs = require('node:fs');
 
+// Wrap the main logic in an async function to allow for the dynamic import.
+(async () => {
+  // Dynamically import the ESM-only electron-store package.
+  const { default: Store } = await import('electron-store');
+  const store = new Store();
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
-  app.quit();
-}
+  // --- Set up all IPC listeners ---
 
-const createWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    icon: 'C:/Users/alonz/Desktop/Daily-Scripture/read.ico',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      enableRemoteModule: false,
-      sandbox: false,
-    },
+  // For electron-store
+  ipcMain.handle('electron-store-get', (event, key) => {
+    return store.get(key);
+  });
+  ipcMain.handle('electron-store-set', (event, key, val) => {
+    store.set(key, val);
   });
 
-  // and load the index.html of the app.
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  // For loading the bible data
+  ipcMain.handle('load-bible-data', () => {
+    const dataPath = path.join(__dirname, 'data', 'en_kjv.json');
+    const data = fs.readFileSync(dataPath, 'utf-8');
+    const jsondata = data.replace(/^\uFEFF/, '');
+    return JSON.parse(jsondata);
+  });
 
-};
+  // --- App startup logic ---
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+  function createWindow() {
+    const mainWindow = new BrowserWindow({
+      width: 800,
+      height: 600,
+      icon: 'C:/Users/alonz/Desktop/Daily-Scripture/read.ico',
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+      },
+    });
+    mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  }
+
+  await app.whenReady();
   createWindow();
 
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
-});
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
-
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit();
+    }
+  });
+})();
